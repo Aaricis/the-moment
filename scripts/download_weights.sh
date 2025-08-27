@@ -44,12 +44,17 @@ for i in "${!URL[@]}"; do
   echo "Download and extraction completed successfully!"
 done
 
-DIR=${1:-./model}
+DIR="./model"
 echo "Downloading model to $DIR ..."
 mkdir -p "$DIR"
 modelscope download \
   --model haiyangpengai/careyou_7b_16bit_v3_2_qwen14_4bit \
   --local_dir "$DIR"
+echo "✅ Download completed!"
+
+EMBEDDING_DIR="./embedding_model"
+echo "Downloading embedding model to $EMBEDDING_DIR ..."
+hf download BAAI/bge-small-zh-v1.5 --local-dir "$EMBEDDING_DIR"
 echo "✅ Download completed!"
 
 echo "✅ All downloads and extractions completed!"
