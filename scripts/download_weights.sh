@@ -52,9 +52,15 @@ modelscope download \
   --local_dir "$DIR"
 echo "✅ Download completed!"
 
+# embedding model: BAAI/bge-small-zh-v1.5
 EMBEDDING_DIR="./embedding_model"
 echo "Downloading embedding model to $EMBEDDING_DIR ..."
 hf download BAAI/bge-small-zh-v1.5 --local-dir "$EMBEDDING_DIR"
 echo "✅ Download completed!"
+
+# reranker model: BAAI/bge-reranker-large
+RERANKER_DIR = "rerank_model"
+echo "Downloading rerank model to $RERANKER_DIR ..."
+hf download BAAI/bge-reranker-large --local-dir "$RERANKER_DIR"
 
 echo "✅ All downloads and extractions completed!"
