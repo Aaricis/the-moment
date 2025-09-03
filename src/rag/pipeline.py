@@ -1,10 +1,9 @@
-from src.configs.rag_config import embedding_model_dir, vector_db_dir, rerank_model_dir
-from langchain_huggingface import HuggingFaceEmbeddings
 from FlagEmbedding import FlagReranker
 from langchain_community.vectorstores import FAISS
-import torch
+from langchain_huggingface import HuggingFaceEmbeddings
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from src.configs.base_config import device
+from src.configs.rag_config import embedding_model_dir, vector_db_dir, rerank_model_dir
 
 
 class EmoLLMRAG:
@@ -69,5 +68,3 @@ class EmoLLMRAG:
 
         # 拼接成一个上下文字符串返回
         return "\n".join(content)
-
-
