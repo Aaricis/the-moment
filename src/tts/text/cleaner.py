@@ -1,4 +1,4 @@
-from text import chinese, japanese, cleaned_text_to_sequence, symbols, english
+from . import chinese, japanese, cleaned_text_to_sequence, symbols, english
 
 language_module_map = {"zh": chinese, "ja": japanese, "en": english}
 special = [
