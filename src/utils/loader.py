@@ -4,6 +4,8 @@ import ffmpeg
 import numpy as np
 import torch
 
+from src.configs.base_config import device, is_half
+from src.tts.module.models import SynthesizerTrn
 from src.utils.parser import DictToAttrRecursive
 
 
@@ -57,3 +59,12 @@ def load_sovits_weights(sovits_path):
     hps = dict_s2['config']
     hps = DictToAttrRecursive(hps)
     hps.model.semantic_frame_rate = "25hz"
+    vq_model = SynthesizerTrn(
+        hps.data.filter_length // 2 + 1,
+        hps.train.segment_size // hps.data.hop_length,
+        n_speakers=hps.data.n_speakers,
+        **hps.model
+    )
+    vq_model = vq_model.half().to(device) if is_half else vq_model.to(device)
+    vq_model.eval()
+    return hps, vq_model
