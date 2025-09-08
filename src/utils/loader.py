@@ -7,6 +7,7 @@ import torch
 from src.configs.base_config import device, is_half
 from src.tts.module.models import SynthesizerTrn
 from src.utils.parser import DictToAttrRecursive
+from src.tts.AR.models.t2s_lightning_module import Text2SemanticLightningModule
 
 
 def load_audio(file, sr):
@@ -68,3 +69,22 @@ def load_sovits_weights(sovits_path):
     vq_model = vq_model.half().to(device) if is_half else vq_model.to(device)
     vq_model.eval()
     return hps, vq_model
+
+def load_gpt_weights(gpt_path):
+    """
+    加载GPT文本→语义 token模型
+    :param gpt_path: 模型路径
+    :return: 固定语义帧率，最大时长限制，模型，配置参数
+    """
+    hz = 50
+    dict_s1 = torch.load(gpt_path, map_location="cpu")
+    config = dict_s1["config"]
+    max_sec = config["data"]["max_sec"]
+    t2s_model = Text2SemanticLightningModule(config, "****", is_train=False)
+    t2s_model.load_state_dict(dict_s1["weight"])
+    if is_half:
+        t2s_model = t2s_model.half()
+    t2s_model = t2s_model.to(device)
+    t2s_model.eval()
+    return hz, max_sec, t2s_model, config
+
