@@ -1,16 +1,11 @@
 import os
-import pdb
 import re
 
 import cn2an
 from pypinyin import lazy_pinyin, Style
 
-import sys
-
-sys.path.append("/data/docker/liujing04/gpt-vits/gpt-vits-master")
-
-from text.symbols import punctuation
-from text.tone_sandhi import ToneSandhi
+from .symbols import punctuation
+from .tone_sandhi import ToneSandhi
 
 current_file_path = os.path.dirname(__file__)
 pinyin_to_symbol_map = {
@@ -19,7 +14,6 @@ pinyin_to_symbol_map = {
 }
 
 import jieba_fast.posseg as psg
-
 
 rep_map = {
     "：": ",",
@@ -165,7 +159,6 @@ if __name__ == "__main__":
     text = "你好"
     text = text_normalize(text)
     print(g2p(text))
-
 
 # # 示例用法
 # text = "这是一个示例文本：,你好！这是一个测试..."

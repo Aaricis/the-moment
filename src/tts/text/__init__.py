@@ -1,4 +1,4 @@
-from symbols import *
+from .symbols import *
 
 
 _symbol_to_id = {s: i for i, s in enumerate(symbols)}

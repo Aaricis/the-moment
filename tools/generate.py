@@ -62,7 +62,7 @@ def get_tts_wav(
     :param text: 目标文本
     :param text_language: 目标语言
     :param how_to_cut: 音频切割方式
-    :return: 采样率，音频字节流
+    :return: （采样率，音频字节流），音频转换时间
     """
     text_to_audio_mappings = load_text_audio_mappings(audio_path, slicer_list)
     ref_wav_path = text_to_audio_mappings.get(selected_text, "")
@@ -228,7 +228,7 @@ async def async_chat(
         history[-1][1] = "\n\n".join(collapsible + [answer_part])
 
         answer_text = answer_part.replace('<think>', '').replace('</think>', '').strip()
-        audio_data = get_tts_wav(
+        audio_data, conversion_time = get_tts_wav(
             selected_text,
             ref_text,
             prompt_language,
@@ -236,7 +236,7 @@ async def async_chat(
             text_language,
             how_to_cut
         )
-        yield history, audio_data
+        yield history, audio_data, conversion_time
 
     except Exception as e:
         history[-1][1] = f"Error: {str(e)}"

@@ -5,12 +5,10 @@ from torch.nn import Conv1d, ConvTranspose1d, Conv2d
 from torch.nn import functional as F
 from torch.nn.utils import weight_norm, remove_weight_norm, spectral_norm
 
-import attentions
-import commons
-import modules
-from commons import init_weights, get_padding
-from mrte_model import MRTE
-from quantize import ResidualVectorQuantizer
+from . import attentions, commons, modules
+from .commons import init_weights, get_padding
+from .mrte_model import MRTE
+from .quantize import ResidualVectorQuantizer
 from ..text import symbols
 
 

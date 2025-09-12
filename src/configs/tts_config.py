@@ -1,5 +1,5 @@
 import os
-from rag_config import base_dir
+from .rag_config import base_dir
 
 # gpt path
 gpt_path = os.path.join(base_dir, 'pretrained_models/heart_girl/heartful_sister.ckpt')

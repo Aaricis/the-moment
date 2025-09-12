@@ -1,15 +1,20 @@
-import os
-import torch
 import json
-import requests
+import os
 import textwrap
+
+import requests
+import torch
 from dotenv import load_dotenv
 from loguru import logger
-from src.rag.pipeline import EmoLLMRAG
-from src.configs.rag_config import prompt_template
-from src.configs.base_config import model_path
-from generate import async_chat
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, BitsAndBytesConfig
+
+import sys
+sys.path.append(os.path.split(sys.path[0])[0]) # 添加包搜索路径
+
+from generate import async_chat
+from src.configs.base_config import model_path
+from src.configs.rag_config import prompt_template
+from src.rag.pipeline import EmoLLMRAG
 
 load_dotenv()  # 自动把 .env 读入环境变量
 
@@ -103,10 +108,10 @@ async def generate_response_and_tts(
 
     input_ids = tokenizer.apply_chat_template(
         conversation,
-        tokenize=True,  # 输出token IDs
+        tokenize=True,  # 直接输出 token
         add_generation_prompt=True,  # 在结尾加上“Assistant 开始回答”的提示，让模型进入生成模式
-        return_tensors="pt"  # 结果直接转成 PyTorch 张量（torch.Tensor）
-    )
+        return_tensors="pt"  # 直接返回 PyTorch tensor
+    ).to(model.device)
 
     streamer = TextIteratorStreamer(  # 流式输出
         tokenizer,
@@ -126,7 +131,7 @@ async def generate_response_and_tts(
         tokenizer=tokenizer,
     )
 
-    async for history, audio in async_chat(
+    async for history, audio, conversion_time in async_chat(
             active_gen,
             history,
             tokenizer,
@@ -138,7 +143,7 @@ async def generate_response_and_tts(
             text_language,
             how_to_cut
     ):
-        yield history, audio
+        yield history, audio, conversion_time
 
 
 if __name__ == "__main__":
@@ -163,3 +168,38 @@ if __name__ == "__main__":
         trust_remote_code=True
     )
     tokenizer.use_default_system_prompt = False  # 关闭 tokenizer 自动在对话最前面追加「系统默认提示词」的行为
+
+    from gradio import ChatMessage
+
+    chat_his = [
+        ChatMessage(role="user", content="你好"),
+        ChatMessage(role="assistant", content="你好！")
+    ]
+
+    from src.utils.loader import load_text_audio_mappings
+    from src.configs.tts_config import audio_path, slicer_list
+
+    text_to_audio_mappings = load_text_audio_mappings(audio_path, slicer_list)
+
+    DEFAULT_AUDIO_SELECT = list(text_to_audio_mappings.keys())[0] if text_to_audio_mappings else ""
+    DEFAULT_REF_TEXT = DEFAULT_AUDIO_SELECT
+    DEFAULT_PROMPT_LANGUAGE = "中文"
+    DEFAULT_TEXT_LANGUAGE = "中文"
+    DEFAULT_HOW_TO_CUT = "不切"
+    his, audio, conversion_time = generate_response_and_tts(
+        chat_his,
+        0.7,
+        0.7,
+        0,
+        1.2,
+        True,
+        DEFAULT_AUDIO_SELECT,
+        DEFAULT_REF_TEXT,
+        DEFAULT_PROMPT_LANGUAGE,
+        DEFAULT_TEXT_LANGUAGE,
+        DEFAULT_HOW_TO_CUT
+    )
+
+    print(his)
+    print(audio)
+    print(conversion_time)

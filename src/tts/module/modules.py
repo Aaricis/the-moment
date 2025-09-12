@@ -2,9 +2,9 @@ import math
 import numpy as np
 import torch
 import torch.distributions as D
-from module import commons
-from module.commons import init_weights, get_padding
-from module.transforms import piecewise_rational_quadratic_transform
+from . import commons
+from .commons import init_weights, get_padding
+from .transforms import piecewise_rational_quadratic_transform
 from torch import nn
 from torch.nn import Conv1d
 from torch.nn import functional as F

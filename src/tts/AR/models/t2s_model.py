@@ -5,11 +5,7 @@ from torch.nn import functional as F
 from torchmetrics.classification import MulticlassAccuracy
 from tqdm import tqdm
 
-from utils import make_pad_mask
-from utils import (
-    topk_sampling,
-    sample,
-)
+from .utils import make_pad_mask, topk_sampling, sample
 from ..modules.embedding import SinePositionalEmbedding
 from ..modules.embedding import TokenEmbedding
 from ..modules.transformer import LayerNorm

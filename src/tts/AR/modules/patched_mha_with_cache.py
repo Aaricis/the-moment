@@ -6,9 +6,9 @@ from torch.nn.functional import (
     _in_projection_packed,
 )
 
-# import torch
-# Tensor = torch.Tensor
-# from typing import Callable, List, Optional, Tuple, Union
+import torch
+Tensor = torch.Tensor
+from typing import Callable, List, Optional, Tuple, Union
 
 
 def multi_head_attention_forward_patched(
