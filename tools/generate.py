@@ -176,7 +176,7 @@ async def async_generate(model, tokenizer, generate_kwargs):
     """
     异步包装器，边生成边yield chunk
     """
-    streamer = TextIteratorStreamer(
+    streamer = TextIteratorStreamer( # 边生成边输出
         tokenizer,
         timeout=20.0,
         skip_prompt=True,
@@ -199,9 +199,8 @@ async def async_generate(model, tokenizer, generate_kwargs):
     finally:
         await gen_task
 
-
 async def async_chat(
-        active_gen, history,
+        active_gen, history: list,
         tokenizer, model, generate_kwargs,
         selected_text, ref_text, prompt_language, text_language, how_to_cut
 ):
@@ -213,33 +212,46 @@ async def async_chat(
     state = ParserState()
 
     try:
+        # === 1. 流式文本生成 ===
         async for chunk in async_generate(model, tokenizer, generate_kwargs):
             if not active_gen[0]:
                 break
-            full_response += chunk
-            state, elapsed = parse_response(full_response, state)
-            collapsible, answer_part = format_response(state, elapsed)
-            history[-1][1] = "\n\n".join(collapsible + [answer_part])
-            yield history, None
 
-        # 最终整理
+            if chunk:
+                full_response += chunk
+                state, elapsed = parse_response(full_response, state)
+                collapsible, answer_part = format_response(state, elapsed)
+
+                # ✅ 更新最后一个 ChatMessage 的 content
+                history[-1].content = "\n\n".join(collapsible + [answer_part])
+
+                # 流式推送文本，音频还没生成
+                yield history, None, "0s"
+
+        # === 2. 文本生成完成，最终整理 ===
         state, elapsed = parse_response(full_response, state)
         collapsible, answer_part = format_response(state, elapsed)
-        history[-1][1] = "\n\n".join(collapsible + [answer_part])
+        history[-1].content = "\n\n".join(collapsible + [answer_part])
 
-        answer_text = answer_part.replace('<think>', '').replace('</think>', '').strip()
-        audio_data, conversion_time = get_tts_wav(
+        # 去掉 <think> 标签
+        answer_text = answer_part.replace("<think>", "").replace("</think>", "").strip()
+
+        # === 3. 流式返回音频 ===
+        # 如果 get_tts_wav 是异步生成器
+        for audio_chunk, conversion_time in get_tts_wav(
             selected_text,
             ref_text,
             prompt_language,
             answer_text,
             text_language,
             how_to_cut
-        )
-        yield history, audio_data, conversion_time
+        ):
+            yield history, audio_chunk, conversion_time
 
     except Exception as e:
-        history[-1][1] = f"Error: {str(e)}"
-        yield history, None
+        history[-1].content = f"Error: {str(e)}"
+        yield history, None, "Error"
+
     finally:
         active_gen[0] = False
+
