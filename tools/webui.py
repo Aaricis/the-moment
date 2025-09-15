@@ -9,7 +9,8 @@ from loguru import logger
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, BitsAndBytesConfig
 
 import sys
-sys.path.append(os.path.split(sys.path[0])[0]) # 添加包搜索路径
+
+sys.path.append(os.path.split(sys.path[0])[0])  # 添加包搜索路径
 
 from generate import async_chat
 from src.configs.base_config import model_path
@@ -71,7 +72,7 @@ async def generate_response_and_tts(
         text_language,
         how_to_cut
 ):
-    user_message = history[-1][0]
+    user_message = history[-1].content
 
     conversation = []
     for user, assistant in history[:-1]:
@@ -121,7 +122,7 @@ async def generate_response_and_tts(
     )
 
     generate_kwargs = dict(
-        input_ids=input_ids.input_ids,
+        input_ids=input_ids,
         streamer=streamer,
         temperature=temperature,
         top_p=top_p,
@@ -160,7 +161,7 @@ if __name__ == "__main__":
         model_path,
         quantization_config=nf4_config,
         torch_dtype=torch.bfloat16,
-        device_map="auto"
+        device_map="auto",
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -172,8 +173,7 @@ if __name__ == "__main__":
     from gradio import ChatMessage
 
     chat_his = [
-        ChatMessage(role="user", content="你好"),
-        ChatMessage(role="assistant", content="你好！")
+        ChatMessage(role="user", content="我很难过"),
     ]
 
     from src.utils.loader import load_text_audio_mappings
@@ -186,20 +186,45 @@ if __name__ == "__main__":
     DEFAULT_PROMPT_LANGUAGE = "中文"
     DEFAULT_TEXT_LANGUAGE = "中文"
     DEFAULT_HOW_TO_CUT = "不切"
-    his, audio, conversion_time = generate_response_and_tts(
-        chat_his,
-        0.7,
-        0.7,
-        0,
-        1.2,
-        True,
-        DEFAULT_AUDIO_SELECT,
-        DEFAULT_REF_TEXT,
-        DEFAULT_PROMPT_LANGUAGE,
-        DEFAULT_TEXT_LANGUAGE,
-        DEFAULT_HOW_TO_CUT
-    )
+    # his, audio, conversion_time = generate_response_and_tts(
+    #     chat_his,
+    #     0.7,
+    #     0.7,
+    #     0,
+    #     1.2,
+    #     True,
+    #     DEFAULT_AUDIO_SELECT,
+    #     DEFAULT_REF_TEXT,
+    #     DEFAULT_PROMPT_LANGUAGE,
+    #     DEFAULT_TEXT_LANGUAGE,
+    #     DEFAULT_HOW_TO_CUT
+    # )
+    #
+    # print(his)
+    # print(audio)
+    # print(conversion_time)
 
-    print(his)
-    print(audio)
-    print(conversion_time)
+    import asyncio
+
+
+    async def debug():
+        async for his, audio, conversion_time in generate_response_and_tts(
+                chat_his,
+                0.7,
+                0.7,
+                0,
+                1.2,
+                [True],
+                DEFAULT_AUDIO_SELECT,
+                DEFAULT_REF_TEXT,
+                DEFAULT_PROMPT_LANGUAGE,
+                DEFAULT_TEXT_LANGUAGE,
+                DEFAULT_HOW_TO_CUT
+        ):
+            print("his:", his)
+            print("audio:", audio)
+            print("time:", conversion_time)
+
+
+    asyncio.run(debug())
+
