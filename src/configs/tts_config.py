@@ -8,5 +8,5 @@ cnhubert_base_path = os.path.join(base_dir, "pretrained_models/chinese-hubert-ba
 bert_path = os.path.join(base_dir, "pretrained_models/chinese-roberta-wwm-ext-large")
 
 # audio path
-audio_path = os.path.join(base_dir, "data/audio")
+audio_path = os.path.join(base_dir, "data/audio/heart_girl")
 slicer_list = 'slicer_opt.list'
