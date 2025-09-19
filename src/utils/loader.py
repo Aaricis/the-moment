@@ -70,6 +70,7 @@ def load_sovits_weights(sovits_path):
     vq_model.eval()
     return hps, vq_model
 
+
 def load_gpt_weights(gpt_path):
     """
     加载GPT文本→语义 token模型
@@ -87,4 +88,3 @@ def load_gpt_weights(gpt_path):
     t2s_model = t2s_model.to(device)
     t2s_model.eval()
     return hz, max_sec, t2s_model, config
-
