@@ -150,16 +150,9 @@ async def generate_response_and_tts(
 if __name__ == "__main__":
     logger.info("Loading Deepseek-R1 model...")
 
-    # 把模型权重量化为 4-bit NF4（Normal Float 4）
-    # nf4_config = BitsAndBytesConfig(
-    #     load_in_4bit=True,
-    #     bnb_4bit_quant_type="nf4",
-    # )
-
     # 加载模型
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
-        # quantization_config=nf4_config,
         torch_dtype=torch.bfloat16,
         device_map="auto",
     )
@@ -186,23 +179,6 @@ if __name__ == "__main__":
     DEFAULT_PROMPT_LANGUAGE = "zh"
     DEFAULT_TEXT_LANGUAGE = "zh"
     DEFAULT_HOW_TO_CUT = "不切"
-    # his, audio, conversion_time = generate_response_and_tts(
-    #     chat_his,
-    #     0.7,
-    #     0.7,
-    #     0,
-    #     1.2,
-    #     True,
-    #     DEFAULT_AUDIO_SELECT,
-    #     DEFAULT_REF_TEXT,
-    #     DEFAULT_PROMPT_LANGUAGE,
-    #     DEFAULT_TEXT_LANGUAGE,
-    #     DEFAULT_HOW_TO_CUT
-    # )
-    #
-    # print(his)
-    # print(audio)
-    # print(conversion_time)
 
     import asyncio
 
@@ -221,10 +197,9 @@ if __name__ == "__main__":
                 DEFAULT_TEXT_LANGUAGE,
                 DEFAULT_HOW_TO_CUT
         ):
-            print("his:", his)
-            print("audio:", audio)
-            print("time:", conversion_time)
+            print("最新 history:", his[-1])
+            print("音频:", audio)
+            print("累计转换时间:", conversion_time)
 
 
     asyncio.run(debug())
-
