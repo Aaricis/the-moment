@@ -100,85 +100,85 @@ def get_tts_wav(
         # 取 第 1 条音频、第 1 个码本通道、第 1 帧 的 token 值
         prompt_semantic = codes[0, 0]
 
-        if prompt_language == "en":
-            phones1, word2ph1, norm_text1 = clean_text_inf(prompt_text, prompt_language)
+    if prompt_language == "en":
+        phones1, word2ph1, norm_text1 = clean_text_inf(prompt_text, prompt_language)
+    else:
+        phones1, word2ph1, norm_text1 = nonen_clean_text_inf(prompt_text, prompt_language)
+
+    if how_to_cut == "凑四句一切":
+        text = cut1(text)
+    elif how_to_cut == "凑50字一切":
+        text = cut2(text)
+    elif how_to_cut == "按中文句号。切":
+        text = cut3(text)
+    elif how_to_cut == "按英文句号.切":
+        text = cut4(text)
+    elif how_to_cut == "按标点符号切":
+        text = cut5(text)
+
+    if text and text[-1] not in splits:
+        text += "。" if text_language != "en" else "."
+
+    texts = text.split("\n")
+    total_conversion_time = 0.0
+
+    if prompt_language == "en":
+        bert1 = get_bert_inf(phones1, word2ph1, norm_text1, prompt_language)
+    else:
+        bert1 = nonen_get_bert_inf(prompt_text, prompt_language)
+
+    for text_chunk in texts:
+        if not text_chunk.strip():
+            continue
+
+        start_time = time.time()
+
+        if text_language == "en":
+            phones2, word2ph2, norm_text2 = clean_text_inf(text_chunk, text_language)
+            bert2 = get_bert_inf(phones2, word2ph2, norm_text2, text_language)
         else:
-            phones1, word2ph1, norm_text1 = nonen_clean_text_inf(prompt_text, prompt_language)
+            phones2, word2ph2, norm_text2 = nonen_clean_text_inf(text_chunk, text_language)
+            bert2 = nonen_get_bert_inf(text_chunk, text_language)
 
-        if how_to_cut == "凑四句一切":
-            text = cut1(text)
-        elif how_to_cut == "凑50字一切":
-            text = cut2(text)
-        elif how_to_cut == "按中文句号。切":
-            text = cut3(text)
-        elif how_to_cut == "按英文句号.切":
-            text = cut4(text)
-        elif how_to_cut == "按标点符号切":
-            text = cut5(text)
+        bert = torch.cat([bert1, bert2], 1)
+        all_phoneme_ids = torch.LongTensor(phones1 + phones2).to(device).unsqueeze(0)
+        bert = bert.to(device).unsqueeze(0)
+        all_phoneme_len = torch.tensor([all_phoneme_ids.shape[-1]]).to(device)
+        prompt = prompt_semantic.unsqueeze(0).to(device)
 
-        if text and text[-1] not in splits:
-            text += "。" if text_language != "en" else "."
+        hz, max_sec, t2s_model, config = load_gpt_weights(gpt_path)
+        with torch.no_grad():
+            pred_semantic, idx = t2s_model.model.infer_panel(
+                all_phoneme_ids,
+                all_phoneme_len,
+                prompt,
+                bert,
+                top_k=config["inference"]["top_k"],
+                early_stop_num=hz * max_sec,
+            )
+        pred_semantic = pred_semantic[:, -idx:].unsqueeze(0)  # 只保留 最后 idx 个 生成的 token（去掉 prompt 部分）
+        refer = get_spepc(hps, ref_wav_path)
+        refer = refer.half().to(device) if is_half else refer.to(device)
+        audio_chunk = vq_model.decode(
+            pred_semantic,
+            torch.LongTensor(phones2).to(device).unsqueeze(0),
+            refer
+        ).detach().cpu().numpy()[0, 0]
 
-        texts = text.split("\n")
-        total_conversion_time = 0.0
+        end_time = time.time()
+        conversion_duration = end_time - start_time
+        total_conversion_time += conversion_duration
 
-        if prompt_language == "en":
-            bert1 = get_bert_inf(phones1, word2ph1, norm_text1, prompt_language)
-        else:
-            bert1 = nonen_get_bert_inf(prompt_text, prompt_language)
-
-        for text_chunk in texts:
-            if not text_chunk.strip():
-                continue
-
-            start_time = time.time()
-
-            if text_language == "en":
-                phones2, word2ph2, norm_text2 = clean_text_inf(text_chunk, text_language)
-                bert2 = get_bert_inf(phones2, word2ph2, norm_text2, text_language)
-            else:
-                phones2, word2ph2, norm_text2 = nonen_clean_text_inf(text_chunk, text_language)
-                bert2 = nonen_get_bert_inf(text_chunk, text_language)
-
-            bert = torch.cat([bert1, bert2], 1)
-            all_phoneme_ids = torch.LongTensor(phones1 + phones2).unsqueeze(0)
-            bert = bert.to(device).unsqueeze(0)
-            all_phoneme_len = torch.tensor([all_phoneme_ids.shape[-1]]).to(device)
-            prompt = prompt_semantic.unsqueeze(0).to(device)
-
-            hz, max_sec, t2s_model, config = load_gpt_weights(gpt_path)
-            with torch.no_grad():
-                pred_semantic, idx = t2s_model.model.infer_panel(
-                    all_phoneme_ids,
-                    all_phoneme_len,
-                    prompt,
-                    bert,
-                    top_k=config["inference"]["top_k"],
-                    early_stop_num=hz * max_sec,
-                )
-            pred_semantic = pred_semantic[:, -idx].unsqueeze(0)  # 只保留 最后 idx 个 生成的 token（去掉 prompt 部分）
-            refer = get_spepc(hps, ref_wav_path)
-            refer = refer.half().to(device) if is_half else refer.to(device)
-            audio_chunk = vq_model.decode(
-                pred_semantic,
-                torch.LongTensor(phones2).to(device).unsqueeze(0),
-                refer
-            ).detach().cpu().numpy()[0, 0]
-
-            end_time = time.time()
-            conversion_duration = end_time - start_time
-            total_conversion_time += conversion_duration
-
-            audio_with_pause = np.concatenate([audio_chunk, zero_wav])
-            yield (hps.data.sampling_rate, (audio_with_pause * 32768).astype(np.int16)), format_time(
-                total_conversion_time)
+        audio_with_pause = np.concatenate([audio_chunk, zero_wav])
+        yield (hps.data.sampling_rate, (audio_with_pause * 32768).astype(np.int16)), format_time(
+            total_conversion_time)
 
 
 async def async_generate(model, tokenizer, generate_kwargs):
     """
     异步包装器，边生成边yield chunk
     """
-    streamer = TextIteratorStreamer( # 边生成边输出
+    streamer = TextIteratorStreamer(  # 边生成边输出
         tokenizer,
         timeout=20.0,
         skip_prompt=True,
@@ -201,6 +201,7 @@ async def async_generate(model, tokenizer, generate_kwargs):
     finally:
         await gen_task
 
+
 async def async_chat(
         active_gen, history: list,
         tokenizer, model, generate_kwargs,
@@ -209,7 +210,6 @@ async def async_chat(
     if not active_gen[0]:
         return
 
-    # generate_kwargs["tokenizer"] = tokenizer  # 注入 tokenizer
     full_response = "<think>"
     state = ParserState()
 
@@ -241,12 +241,12 @@ async def async_chat(
         # === 3. 流式返回音频 ===
         # 如果 get_tts_wav 是异步生成器
         for audio_chunk, conversion_time in get_tts_wav(
-            selected_text,
-            ref_text,
-            prompt_language,
-            answer_text,
-            text_language,
-            how_to_cut
+                selected_text,
+                ref_text,
+                prompt_language,
+                answer_text,
+                text_language,
+                how_to_cut
         ):
             yield history, audio_chunk, conversion_time
 
@@ -257,3 +257,25 @@ async def async_chat(
     finally:
         active_gen[0] = False
 
+
+if __name__ == '__main__':
+    text_to_audio_mappings = load_text_audio_mappings(audio_path, slicer_list)
+
+    DEFAULT_AUDIO_SELECT = list(text_to_audio_mappings.keys())[0] if text_to_audio_mappings else ""
+    DEFAULT_REF_TEXT = DEFAULT_AUDIO_SELECT
+    DEFAULT_PROMPT_LANGUAGE = "zh"
+    DEFAULT_TEXT_LANGUAGE = "zh"
+    DEFAULT_HOW_TO_CUT = "不切"
+
+    for audio_data, conversion_time in get_tts_wav(
+            DEFAULT_AUDIO_SELECT,
+            DEFAULT_REF_TEXT,
+            DEFAULT_PROMPT_LANGUAGE,
+            "好明媚的对视一笑",
+            DEFAULT_TEXT_LANGUAGE,
+            DEFAULT_HOW_TO_CUT
+    ):
+        sr, wav_bytes = audio_data  # 采样率 + 音频字节流
+        print("采样率:", sr)
+        print("音频字节长度:", len(wav_bytes))
+        print("累计转换时间:", conversion_time)
