@@ -47,9 +47,5 @@ def clean_special(text, language, special_s, target_symbol):
 
 
 def text_to_sequence(text, language):
-    phones = clean_text(text)
+    phones = clean_text(text, language)
     return cleaned_text_to_sequence(phones)
-
-
-if __name__ == "__main__":
-    print(clean_text("你好%啊啊啊额、还是到付红四方。", "zh"))
