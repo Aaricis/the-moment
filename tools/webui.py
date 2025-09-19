@@ -84,7 +84,7 @@ async def generate_response_and_tts(
     # 联网搜索
     searched_results = lang_search(user_message)
     if searched_results:
-        logger.info("联网搜索结果：", searched_results)
+        logger.info(f"联网搜索结果：{searched_results}")
     else:
         logger.info("联网未搜索到准确信息")
 
@@ -92,7 +92,7 @@ async def generate_response_and_tts(
     rag = EmoLLMRAG()
     retrieved_context = rag.get_retrieval_content(user_message)
     if retrieved_context:
-        logger.info("知识库搜索结果：", retrieved_context)
+        logger.info(f"知识库搜索结果：{retrieved_context}")
     else:
         logger.info("知识库未搜索到准确信息")
 
@@ -151,15 +151,15 @@ if __name__ == "__main__":
     logger.info("Loading Deepseek-R1 model...")
 
     # 把模型权重量化为 4-bit NF4（Normal Float 4）
-    nf4_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-    )
+    # nf4_config = BitsAndBytesConfig(
+    #     load_in_4bit=True,
+    #     bnb_4bit_quant_type="nf4",
+    # )
 
     # 加载模型
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
-        quantization_config=nf4_config,
+        # quantization_config=nf4_config,
         torch_dtype=torch.bfloat16,
         device_map="auto",
     )
@@ -183,8 +183,8 @@ if __name__ == "__main__":
 
     DEFAULT_AUDIO_SELECT = list(text_to_audio_mappings.keys())[0] if text_to_audio_mappings else ""
     DEFAULT_REF_TEXT = DEFAULT_AUDIO_SELECT
-    DEFAULT_PROMPT_LANGUAGE = "中文"
-    DEFAULT_TEXT_LANGUAGE = "中文"
+    DEFAULT_PROMPT_LANGUAGE = "zh"
+    DEFAULT_TEXT_LANGUAGE = "zh"
     DEFAULT_HOW_TO_CUT = "不切"
     # his, audio, conversion_time = generate_response_and_tts(
     #     chat_his,
@@ -212,7 +212,7 @@ if __name__ == "__main__":
                 chat_his,
                 0.7,
                 0.7,
-                0,
+                4096,
                 1.2,
                 [True],
                 DEFAULT_AUDIO_SELECT,
