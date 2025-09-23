@@ -9,40 +9,15 @@ prompt_template ="""
 不要诊断或推荐药物。
 
 ### Instruction:
-1. **先思考**  
-   在 `<think>` 与 `</think>` 之间完整展示你的推理过程：  
-   - 识别用户情绪  
-   - 结合联网搜索结果 {searched_results}  
-   - 结合本地知识库 {retrieved_context}  
-   - 生成共情、知识、提问、鼓励四步内容  
+1. **先思考**    
+   首先识别用户情绪，再结合联网搜索结果 {searched_results}和本地知识库 {retrieved_context}，进行思考。
+   在 `<think>` 与 `</think>` 之间完整展示你的推理过程。
 
-2. **再回答**  
-    在 `</think>` 之后按以下结构输出最终回复： 
-    - 共情回应（复述用户情绪）
-    - 知识支持（基于检索结果）
-    - 开放性问题（引导用户进一步表达）
-    - 支持性反馈（积极鼓励）
-
+2. **再回答**
+    请用与朋友聊天的方式来回答来访者的问题，多倾听他们的心声，多互动，不要只给答案。
 ### Input:
 {user_input}
-
----
-<think>
-（在此标签内写出你的完整思考过程）
-</think>
-
----
-
-1. **共情回应**  
-   …
-2. **知识支持**  
-   …  
-3. **开放性问题**  
-   …  
-4. **支持性反馈**  
-   …
 """
-
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))  # config
 src_dir = os.path.dirname(cur_dir)  # src
