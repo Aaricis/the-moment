@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+
 sys.path.append(os.path.split(sys.path[0])[0])  # 添加包搜索路径
 import textwrap
 
@@ -199,9 +200,7 @@ async def generate_wrapper(
     yield final_chatbot, final_audio, final_tts_time
 
 
-
 def build_app():
-
     css = """
     .spinner {
         animation: spin 1s linear infinite;
@@ -343,7 +342,6 @@ def build_app():
                 label="Repetition Penalty"
             )
 
-
         gr.Examples(
             examples=[
                 ["你是谁呀"],
@@ -363,33 +361,6 @@ def build_app():
         default_prompt_language = "zh"
         default_text_language = "zh"
         default_how_to_cut = "不切"
-
-        # # 鼠标点击“Send”按钮
-        # submit_event = submit_btn.click(
-        #     user, [msg, chatbot], [msg, chatbot], queue=False
-        # ).then(
-        #     lambda: [True], outputs=active_gen
-        # ).then(
-        #     generate_response_and_tts,
-        #     [
-        #         chatbot,
-        #         temperature,
-        #         top_p,
-        #         max_new_tokens,
-        #         repetition_penalty,
-        #         active_gen,
-        #         gr.State(default_audio_select),
-        #         gr.State(default_ref_text),
-        #         gr.State(default_prompt_language),
-        #         gr.State(default_text_language),
-        #         gr.State(default_how_to_cut)
-        #     ],
-        #     [
-        #         chatbot,
-        #         output_audio,
-        #         tts_time_display
-        #     ]
-        # )
 
         # 使用包装函数
         submit_event = submit_btn.click(
@@ -438,8 +409,8 @@ def build_app():
             lambda: [False], None, active_gen, cancels=[submit_event]
         )
 
-
     return demo
+
 
 if __name__ == "__main__":
     logger.info("Loading Deepseek-R1 model...")
@@ -457,37 +428,6 @@ if __name__ == "__main__":
     )
     tokenizer.use_default_system_prompt = False  # 关闭 tokenizer 自动在对话最前面追加「系统默认提示词」的行为
 
-    # chat_his = [{'role': 'user', 'metadata': None, 'content': '爸妈老是说我笨', 'options': None},
-    #            {'role': 'assistant', 'metadata': None, 'content': '', 'options': None}]
-    # import asyncio
-    #
-    # text_to_audio_mappings = load_text_audio_mappings(audio_path, slicer_list)
-    # default_audio_select = list(text_to_audio_mappings.keys())[0] if text_to_audio_mappings else ""
-    # default_ref_text = default_audio_select
-    # default_prompt_language = "zh"
-    # default_text_language = "zh"
-    # default_how_to_cut = "不切"
-    #
-    # async def debug():
-    #     async for his, audio, conversion_time in generate_response_and_tts(
-    #             chat_his,
-    #             0.7,
-    #             0.7,
-    #             2048,
-    #             1.2,
-    #             [True],
-    #             default_audio_select,
-    #             default_ref_text,
-    #             default_prompt_language,
-    #             default_text_language,
-    #             default_how_to_cut
-    #     ):
-    #         print("最新 history:", his[-1])
-    #         print("音频:", audio)
-    #         print("累计转换时间:", conversion_time)
-    #
-    #
-    # asyncio.run(debug())
-
     app = build_app()
-    app.queue(api_open=True, max_size=20, default_concurrency_limit=20).launch(server_name="0.0.0.0", server_port=7860, max_threads=40)
+    app.queue(api_open=True, max_size=20, default_concurrency_limit=20).launch(server_name="0.0.0.0", server_port=7860,
+                                                                               max_threads=40)
