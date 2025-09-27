@@ -12,4 +12,3 @@ def cleaned_text_to_sequence(cleaned_text):
   '''
   phones = [_symbol_to_id[symbol] for symbol in cleaned_text]
   return phones
-

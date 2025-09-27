@@ -46,51 +46,72 @@ def clean_text_inf(text, language):
     return phones, word2ph, norm_text  # 音素，每个词的因素长度，归一化文本
 
 
-def split_en_inf(text, language):
+def split_en_inf(sentence, language):
     """
     把一段混合语言文本（如 "你好hello世界world"）拆成交替的文本块 + 语言标签
-    :param text: 文本
+    :param sentence: 文本
     :param language:语言
     :return: 文本块，语言标签
     """
     pattern = re.compile(r'[a-zA-Z. ]+')
-    text_list, lang_list = [], []
+    textlist = []
+    langlist = []
     pos = 0
-    for match in pattern.finditer(text):
+    for match in pattern.finditer(sentence):
         start, end = match.span()
         if start > pos:
-            text_list.append(text[pos:start])
-            lang_list.append(language)
-        text_list.append(text[start:end])
-        lang_list.append("en")
+            textlist.append(sentence[pos:start])
+            langlist.append(language)
+        textlist.append(sentence[start:end])
+        langlist.append("en")
         pos = end
-    if pos < len(text):
-        text_list.append(text[pos:])
-        lang_list.append(language)
+    if pos < len(sentence):
+        textlist.append(sentence[pos:])
+        langlist.append(language)
 
-    return text_list, lang_list
+    return textlist, langlist
 
+
+# def nonen_clean_text_inf(text, language):
+#     """
+#     把任意语言混合文本（中英/中日/中韩等）拆成纯音素序列 + 词级对齐 + 归一化文本
+#     :param text: 文本
+#     :param language: 语言
+#     :return: 音素，每个词的因素长度，归一化文本
+#     """
+#     text_list, lang_list = split_en_inf(text, language)
+#     phones_list, word2ph_list, norm_text_list = [], [], []
+#     for i in range(len(text_list)):
+#         lang = lang_list[i]
+#         phones, word2ph, norm_text = clean_text_inf(text_list[i], lang)
+#         phones_list.append(phones)
+#         if lang not in ("en", "ja"):
+#             word2ph_list.append(word2ph)
+#         norm_text_list.append(norm_text)
+#
+#     phones = sum(phones_list, [])
+#     word2ph = sum(word2ph_list, [])
+#     norm_text = ' '.join(norm_text_list)
+#     return phones, word2ph, norm_text
 
 def nonen_clean_text_inf(text, language):
-    """
-    把任意语言混合文本（中英/中日/中韩等）拆成纯音素序列 + 词级对齐 + 归一化文本
-    :param text: 文本
-    :param language: 语言
-    :return: 音素，每个词的因素长度，归一化文本
-    """
-    text_list, lang_list = split_en_inf(text, language)
-    phones_list, word2ph_list, norm_text_list = [], [], []
-    for i in range(len(text_list)):
-        lang = lang_list[i]
-        phones, word2ph, norm_text = clean_text_inf(text_list[i], lang)
+    textlist, langlist = split_en_inf(text, language)
+    phones_list = []
+    word2ph_list = []
+    norm_text_list = []
+    for i in range(len(textlist)):
+        lang = langlist[i]
+        phones, word2ph, norm_text = clean_text_inf(textlist[i], lang)
         phones_list.append(phones)
-        if lang not in ("en", "ja"):
+        if lang == "en" or "ja":
+            pass
+        else:
             word2ph_list.append(word2ph)
         norm_text_list.append(norm_text)
-
     phones = sum(phones_list, [])
     word2ph = sum(word2ph_list, [])
     norm_text = ' '.join(norm_text_list)
+
     return phones, word2ph, norm_text
 
 
@@ -235,6 +256,13 @@ def get_bert_feature(text, word2ph):
         for i in range(len(word2ph)):
             repeat_feature = res[i].repeat(word2ph[i], 1)
             phone_level_feature.append(repeat_feature)
+
+        if not phone_level_feature:
+            print("【get_bert_feature】phone_level_feature 为空！详细诊断：")
+            print(f"    text = {repr(text)}")
+            print(f"    word2ph = {word2ph}")
+            print(f"    res.shape = {res.shape}")
+            print(f"    len(word2ph) = {len(word2ph)}")
         phone_level_feature = torch.cat(phone_level_feature, dim=0)
         return phone_level_feature.T
 
@@ -245,19 +273,27 @@ def get_bert_inf(phones, word2ph, norm_text, language):
     else:
         bert = torch.zeros(
             (1024, len(phones)),
-            dtype=torch.float16 if is_half else torch.float32,
+            dtype=torch.float16 if is_half == True else torch.float32,
         ).to(device)
+
     return bert
 
 
 def nonen_get_bert_inf(text, language):
-    text_list, lang_list = split_en_inf(text, language)
+    textlist, langlist = split_en_inf(text, language)
     bert_list = []
-    for i in range(len(text_list)):
-        text = text_list[i]
-        lang = lang_list[i]
+    for i in range(len(textlist)):
+        text = textlist[i]
+        lang = langlist[i]
         phones, word2ph, norm_text = clean_text_inf(text, lang)
         bert = get_bert_inf(phones, word2ph, norm_text, lang)
         bert_list.append(bert)
     bert = torch.cat(bert_list, dim=1)
+
     return bert
+
+
+if __name__ == "__main__":
+    text_chunk =  '### 回答：'
+    text_language = 'zh'
+    bert2 = nonen_get_bert_inf(text_chunk, text_language)
