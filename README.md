@@ -13,8 +13,8 @@ pip install -r requirements.txt
 **Install from conda**
 
 ```text
-conda create -n chattts python=3.11
-conda activate chattts
+conda create -n <env name> python=3.11
+conda activate <env name>
 pip install -r requirements.txt
 ```
 
