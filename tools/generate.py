@@ -16,7 +16,7 @@ from src.utils.loader import load_text_audio_mappings, load_audio
 from src.utils.parser import ParserState, parse_response
 from src.utils.response import format_response, format_time
 from src.utils.tts_utils import clean_text_inf, nonen_clean_text_inf, cut1, cut2, cut3, cut4, cut5, splits, \
-    get_bert_inf, nonen_get_bert_inf
+    get_bert_inf, nonen_get_bert_inf, process_text, merge_short_text_in_array
 from src.tts.AR.models.t2s_lightning_module import Text2SemanticLightningModule
 from src.tts.module.models import SynthesizerTrn
 from src.utils.parser import DictToAttrRecursive
@@ -169,6 +169,8 @@ async def get_tts_wav(selected_text, prompt_text, prompt_language, text, text_la
         text += "。" if text_language != "en" else "."
 
     texts = text.split("\n")
+    texts = process_text(texts)
+    texts = merge_short_text_in_array(texts, 5)
     total_conversion_time = 0.0
 
     if prompt_language == "en":
@@ -290,14 +292,19 @@ async def async_chat(
 
         # 去掉 <think> 标签
         answer_text = answer_part.replace("<think>", "").replace("</think>", "").strip()
-        print("answer text =", len(answer_text), "answer text =", answer_text)
+        print("len(answer text) =", len(answer_text), "answer text =", answer_text)
+
+        lines = [line.strip() for line in answer_text.split('\n') if line.strip()]
+        cleaned_answer_text = ''.join(lines)
+        print("cleaned answer text =", len(cleaned_answer_text), "text =", cleaned_answer_text)
 
         # === 3. 流式返回音频 ===
         async for audio_chunk, conversion_time in get_tts_wav(
                 selected_text,
                 ref_text,
                 prompt_language,
-                answer_text,
+                # answer_text,
+                cleaned_answer_text,  # 使用清理后的文本
                 text_language,
                 how_to_cut
         ):
@@ -327,7 +334,7 @@ async def test_tts():
     DEFAULT_REF_TEXT = DEFAULT_AUDIO_SELECT
     DEFAULT_PROMPT_LANGUAGE = "zh"
     DEFAULT_TEXT_LANGUAGE = "zh"
-    DEFAULT_HOW_TO_CUT = "不切"
+    DEFAULT_HOW_TO_CUT = "按标点符号切"
 
     # 1. 累计所有 yield 段
     sr, pcm_total = None, []
@@ -335,7 +342,7 @@ async def test_tts():
             DEFAULT_AUDIO_SELECT,
             DEFAULT_REF_TEXT,
             DEFAULT_PROMPT_LANGUAGE,
-            "你好呀！我是一个AI助手，由深度求索（DeepSeek）的团队开发，基于deepseek-r1模型微调而来。我的主要功能是帮助你解答问题、提供建议，或者只是闲聊解闷。你可以叫我“Care”，因为我专注于心理相关的咨询和支持。有什么我可以帮你的吗？",
+            "哎呀，看来你也挺有意思的嘛！为什么会突然问我“你是谁呀”呢？是不是最近有点好奇啊，或者是想到了某些特别的事情？你可以多聊聊哦～比如说，你在什么时候会有这样的疑问？或者说，有没有什么特定的原因让你这么问？",
             DEFAULT_TEXT_LANGUAGE,
             DEFAULT_HOW_TO_CUT
     ):
@@ -347,7 +354,7 @@ async def test_tts():
     full_pcm = np.concatenate(pcm_total) if pcm_total else np.zeros(0, dtype=np.int16)
 
     # 3. 写 .wav
-    out_file = "test_tts.wav"
+    out_file = "test_cut.wav"
     sf.write(out_file, full_pcm, sr)
     print(f"✅ 已生成 {out_file}  {len(full_pcm) / sr:.2f}s  请用播放器打开！")
 
