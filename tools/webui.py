@@ -9,7 +9,6 @@ import gradio as gr
 import requests
 import torch
 from dotenv import load_dotenv
-from gradio import ChatMessage
 from loguru import logger
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
 
@@ -172,10 +171,6 @@ async def generate_wrapper(
         text_language,
         how_to_cut
 ):
-    final_chatbot = None
-    final_audio = None
-    final_tts_time = None
-
     async for chatbot, audio, tts_time in generate_response_and_tts(
             chatbot,
             temperature,
@@ -189,15 +184,14 @@ async def generate_wrapper(
             text_language,
             how_to_cut
     ):
-        final_chatbot = chatbot
-        final_audio = audio
-        final_tts_time = tts_time
+
         # 如果是中间结果，只更新chatbot
         if audio is None:
+            # 文本流
             yield chatbot, None, None
-
-    # 返回最终结果
-    yield final_chatbot, final_audio, final_tts_time
+        else:
+            # 音频流
+            yield chatbot, audio, tts_time
 
 
 def build_app():
@@ -242,44 +236,6 @@ def build_app():
     }
     """
 
-    description = '''
-    # 🧠 An AI assistant with extensive knowledge in psychology, and my name is Care.
-
-    ## 🚀 Overview
-    This model is finetuned on deepseek-r1. If this repo helps you, star and share it ❤️. This repo will be continuously merged into EmoLLM.
-
-    ## ✨ Functions
-    ✅Provide an interactive chat interface for psychological consultation seekers.
-
-    ✅Integrate knowledge retrieval
-
-    ✅Integrate web searching
-
-    ✅Two customized tts (ISSUE: more voice models)
-
-    ✅Display the consuming time of generating voice with the streaming way
-
-    ❌Virtual mental companion
-
-    ## ⚠️ issue status
-    - 2025.4.29 fix bug of clearing and stopping op.
-    - 2025.5.3 web search supports.
-    - 2025.5.5 rag supports. (demo code, needs to be checked)
-    - 2025.5.7 fix bug of rag.
-    - 2025.5.9 tts supports.
-    - 2025.5.10 two voice models.
-    - 2025.5.16 merge into EmoLLM.
-    - 2025.8.22 display the time of streaming voice.
-
-    ## 🙏 Acknowledgments
-    We are grateful to Modelscope for supporting this project with resources.
-
-    The rag codes are based on [EmoLLM](https://github.com/SmartFlowAI/EmoLLM )
-
-    ## 🤝 Contributing
-    Feel free to contribute to this project via our [github repo](https://github.com/HaiyangPeng/careyou ). Grow together!
-    '''
-
     def user(message, history):
         if not message:
             return "", history
@@ -288,7 +244,6 @@ def build_app():
         return "", history
 
     with gr.Blocks(css=css) as demo:
-        gr.Markdown(description)
         active_gen = gr.State([False])
 
         chatbot = gr.Chatbot(
@@ -360,7 +315,8 @@ def build_app():
         default_ref_text = default_audio_select
         default_prompt_language = "zh"
         default_text_language = "zh"
-        default_how_to_cut = "不切"
+        # default_how_to_cut = "不切"
+        default_how_to_cut = "按标点符号切"
 
         # 使用包装函数
         submit_event = submit_btn.click(
