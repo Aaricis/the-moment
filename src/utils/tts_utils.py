@@ -238,6 +238,34 @@ def cut5(inp):
     opt = [item for item in mergeitems if not set(item).issubset(punds)]
     return "\n".join(opt)
 
+def process_text(texts):
+    _text = []
+    if all(text in [None, " ", "\n", ""] for text in texts):
+        raise ValueError("请输入有效文本")
+    for text in texts:
+        if text in [None, " ", ""]:
+            pass
+        else:
+            _text.append(text)
+    return _text
+
+def merge_short_text_in_array(texts, threshold):
+    if (len(texts)) < 2:
+        return texts
+    result = []
+    text = ""
+    for ele in texts:
+        text += ele
+        if len(text) >= threshold:
+            result.append(text)
+            text = ""
+    if len(text) > 0:
+        if len(result) == 0:
+            result.append(text)
+        else:
+            result[len(result) - 1] += text
+    return result
+
 
 def get_bert_feature(text, word2ph):
     """
@@ -294,6 +322,11 @@ def nonen_get_bert_inf(text, language):
 
 
 if __name__ == "__main__":
-    text_chunk =  '### 回答：'
-    text_language = 'zh'
-    bert2 = nonen_get_bert_inf(text_chunk, text_language)
+    text = "你好呀～看来你在问我是谁呢？其实啊，我是个人工智能助手，由一堆代码和算法组成哦~ 不过嘛，我觉得更重要的是，你可以怎么称呼我，或者说，你觉得我会怎样才能帮到你呢？如果你有任何烦恼或者想聊聊什么话题，都可以告诉我哦，我很乐意为你提供陪伴和建议!"
+    text = cut5(text)
+    print(text)
+    texts = text.split("\n")
+    texts = process_text(texts)
+    texts = merge_short_text_in_array(texts, 5)
+    print(texts)
+
