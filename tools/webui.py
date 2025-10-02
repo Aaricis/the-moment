@@ -196,158 +196,7 @@ async def generate_wrapper(
 
 
 import base64
-#
-#
-# def build_app():
-#     assets_dir = Path(__file__).parent.parent / "assets"
-#     bg_path = str(assets_dir / "bg.jpg")
-#
-#     # 转 base64
-#     with open(bg_path, "rb") as f:
-#         bg_base64 = base64.b64encode(f.read()).decode()
-#
-#     css = f"""
-#     /* ===== 全局样式 ===== */
-#     :root {{
-#         --bg-main: #121212;
-#         --bg-glass: rgba(255, 255, 255, 0.08);
-#         --bg-glass-hover: rgba(255, 255, 255, 0.12);
-#         --accent: #facc15;
-#         --user-bubble: #3b82f6;
-#         --assistant-bubble: #10b981;
-#         --text-primary: #e5e7eb;
-#         --border: rgba(255, 255, 255, 0.15);
-#         --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-#     }}
-#
-#     /* ===== 修复背景图片 ===== */
-#     .gradio-container {{
-#         min-height: 100vh !important;
-#         background: linear-gradient(rgba(18, 18, 18, 0.7), rgba(18, 18, 18, 0.7)),
-#                     url("data:image/jpg;base64,{bg_base64}") no-repeat center center fixed !important;
-#         background-size: cover !important;
-#         padding: 20px !important;
-#         margin: 0 !important;
-#         width: 100% !important;
-#         max-width: none !important;
-#     }}
-#
-#     /* ===== 主要内容区域 ===== */
-#     .container {{
-#         backdrop-filter: blur(12px);
-#         -webkit-backdrop-filter: blur(12px);
-#         background: var(--bg-glass) !important;
-#         border-radius: 24px;
-#         border: 1px solid var(--border);
-#         box-shadow: var(--shadow);
-#         padding: 24px;
-#         margin: 0 auto;
-#         max-width: 900px;
-#     }}
-#
-#     /* ===== 聊天区域 ===== */
-#     #chatbot {{
-#         background: var(--bg-glass);
-#         border-radius: 16px;
-#         border: 1px solid var(--border);
-#         padding: 16px;
-#         height: 500px !important;
-#     }}
-#
-#     .user {{
-#         background: var(--user-bubble) !important;
-#         color: #fff !important;
-#         border-radius: 18px 18px 4px 18px !important;
-#         padding: 10px 14px !important;
-#         margin: 8px 0 !important;
-#         max-width: 70%;
-#         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-#     }}
-#
-#     .assistant {{
-#         background: var(--assistant-bubble) !important;
-#         color: #fff !important;
-#         border-radius: 18px 18px 18px 4px !important;
-#         padding: 10px 14px !important;
-#         margin: 8px 0 !important;
-#         max-width: 70%;
-#         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-#     }}
-#
-#     /* ===== 其他组件样式 ===== */
-#     input[type="text"], textarea, select {{
-#         background: var(--bg-glass) !important;
-#         border: 1px solid var(--border) !important;
-#         border-radius: 12px !important;
-#         color: var(--text-primary) !important;
-#         padding: 12px 16px !important;
-#     }}
-#
-#     button {{
-#         border-radius: 12px !important;
-#         font-weight: 600 !important;
-#     }}
-#     """
-#
-#     def user(message, history):
-#         if not message:
-#             return "", history
-#         history.append({"role": "user", "content": message})
-#         history.append({"role": "assistant", "content": ""})
-#         return "", history
-#
-#     with gr.Blocks(css=css, title="The Moment") as demo:
-#         # 添加一个外层容器
-#         with gr.Column(elem_classes="container"):
-#             active_gen = gr.State([False])
-#             chatbot = gr.Chatbot(elem_id="chatbot", height=500, show_label=False, render_markdown=True, type="messages")
-#
-#             with gr.Row():
-#                 msg = gr.Textbox(label="Message", placeholder="Type your message...", container=False, scale=4)
-#                 submit_btn = gr.Button("Send", variant='primary', scale=1)
-#
-#             with gr.Row():
-#                 clear_btn = gr.Button("Clear", variant='secondary')
-#                 stop_btn = gr.Button("Stop", variant='stop')
-#
-#             with gr.Accordion("Parameters", open=False):
-#                 temperature = gr.Slider(minimum=0.1, maximum=1.5, value=0.6, label="Temperature")
-#                 top_p = gr.Slider(minimum=0.1, maximum=1.0, value=0.95, label="Top-p")
-#                 max_new_tokens = gr.Slider(minimum=2048, maximum=32768, value=4096, step=64, label="Max Tokens")
-#                 repetition_penalty = gr.Slider(minimum=1, maximum=1.5, value=1.2, step=0.01, label="Repetition Penalty")
-#
-#             gr.Examples(
-#                 examples=[
-#                     ["我最近总是莫名想哭/发脾气，这是抑郁吗？"],
-#                     ["我不知道自己是谁，好像一直在演别人。"],
-#                     ["我半夜总是惊醒，脑子里停不下来，这是焦虑吗？"]],
-#                 inputs=msg,
-#                 label="咨询例子"
-#             )
-#             output_audio = gr.Audio(label="converted voice", streaming=True, autoplay=True)
-#             tts_time_display = gr.Textbox(label="TTS Conversion Time", value="0s", interactive=False)
-#
-#             # 其他代码保持不变...
-#             text_to_audio_mappings = load_text_audio_mappings(audio_path, slicer_list)
-#             default_audio_select = list(text_to_audio_mappings.keys())[0] if text_to_audio_mappings else ""
-#             default_ref_text = default_audio_select
-#             default_prompt_language = "zh"
-#             default_text_language = "zh"
-#             default_how_to_cut = "按标点符号切"
-#
-#             submit_event = submit_btn.click(user, [msg, chatbot], [msg, chatbot], queue=False) \
-#                 .then(lambda: [True], outputs=active_gen) \
-#                 .then(generate_wrapper, [chatbot, temperature, top_p, max_new_tokens, repetition_penalty,
-#                                          active_gen, gr.State(default_audio_select), gr.State(default_ref_text),
-#                                          gr.State(default_prompt_language), gr.State(default_text_language),
-#                                          gr.State(default_how_to_cut)],
-#                       [chatbot, output_audio, tts_time_display])
-#
-#             stop_btn.click(lambda: [False], None, active_gen, cancels=[submit_event])
-#             clear_btn.click(lambda: (None, None, "0s"), None, [chatbot, output_audio, tts_time_display], queue=False) \
-#                 .then(lambda: [False], None, active_gen, cancels=[submit_event])
-#
-#     return demo
+
 
 def build_app():
     assets_dir = Path(__file__).parent.parent / "assets"
@@ -371,23 +220,16 @@ def build_app():
         --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }}
 
-    /* ===== 修复背景图片 - 应用到 body ===== */
-    body {{
-        background: linear-gradient(rgba(18, 18, 18, 0.7), rgba(18, 18, 18, 0.7)), 
+    /* ===== 修复背景图片 ===== */
+    .gradio-container {{
+        min-height: 100vh !important;
+        background: linear-gradient(rgba(18, 18, 18, 0.7), rgba(18, 18, 18, 0.7)),
                     url("data:image/jpg;base64,{bg_base64}") no-repeat center center fixed !important;
         background-size: cover !important;
-        margin: 0 !important;
         padding: 20px !important;
-        min-height: 100vh !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }}
-
-    /* ===== Gradio 主容器 ===== */
-    .gradio-container {{
-        background: transparent !important;
-        max-width: 900px !important;
-        margin: 0 auto !important;
-        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
     }}
 
     /* ===== 主要内容区域 ===== */
@@ -400,6 +242,7 @@ def build_app():
         box-shadow: var(--shadow);
         padding: 24px;
         margin: 0 auto;
+        max-width: 900px;
     }}
 
     /* ===== 聊天区域 ===== */
@@ -409,10 +252,8 @@ def build_app():
         border: 1px solid var(--border);
         padding: 16px;
         height: 500px !important;
-        overflow-y: auto !important;
     }}
 
-    /* ===== 消息气泡 ===== */
     .user {{
         background: var(--user-bubble) !important;
         color: #fff !important;
@@ -421,7 +262,6 @@ def build_app():
         margin: 8px 0 !important;
         max-width: 70%;
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-        margin-left: auto !important;  /* 用户消息靠右 */
     }}
 
     .assistant {{
@@ -432,11 +272,10 @@ def build_app():
         margin: 8px 0 !important;
         max-width: 70%;
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-        margin-right: auto !important;  /* 助手消息靠左 */
     }}
 
-    /* ===== 输入框和按钮样式 ===== */
-    .gr-text-input input, .gr-textarea textarea {{
+    /* ===== 其他组件样式 ===== */
+    input[type="text"], textarea, select {{
         background: var(--bg-glass) !important;
         border: 1px solid var(--border) !important;
         border-radius: 12px !important;
@@ -444,67 +283,9 @@ def build_app():
         padding: 12px 16px !important;
     }}
 
-    .gr-text-input input:focus, .gr-textarea textarea:focus {{
-        border-color: var(--accent) !important;
-        box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.4) !important;
-    }}
-
-    .gr-button {{
+    button {{
         border-radius: 12px !important;
         font-weight: 600 !important;
-        transition: all 0.2s ease !important;
-    }}
-
-    .gr-button:hover {{
-        transform: translateY(-2px) !important;
-    }}
-
-    /* ===== 参数面板 ===== */
-    .gr-accordion {{
-        background: var(--bg-glass) !important;
-        border-radius: 12px !important;
-        border: 1px solid var(--border) !important;
-    }}
-
-    /* ===== 示例卡片 ===== */
-    .gr-examples {{
-        background: var(--bg-glass) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 12px !important;
-    }}
-
-    /* ===== 音频播放器 ===== */
-    .gr-audio {{
-        background: var(--bg-glass) !important;
-        border-radius: 12px !important;
-        border: 1px solid var(--border) !important;
-    }}
-
-    /* ===== 确保滚动条样式 ===== */
-    #chatbot::-webkit-scrollbar {{
-        width: 6px;
-    }}
-
-    #chatbot::-webkit-scrollbar-track {{
-        background: var(--bg-glass);
-        border-radius: 3px;
-    }}
-
-    #chatbot::-webkit-scrollbar-thumb {{
-        background: var(--accent);
-        border-radius: 3px;
-    }}
-
-    /* ===== 加载动画 ===== */
-    .spinner {{
-        animation: spin 1s linear infinite;
-        display: inline-block;
-        margin-right: 8px;
-    }}
-
-    @keyframes spin {{
-        from {{ transform: rotate(0deg); }}
-        to {{ transform: rotate(360deg); }}
     }}
     """
 
@@ -516,90 +297,35 @@ def build_app():
         return "", history
 
     with gr.Blocks(css=css, title="The Moment") as demo:
-        # 添加一个外层容器包裹所有内容
+        # 添加一个外层容器
         with gr.Column(elem_classes="container"):
             active_gen = gr.State([False])
+            chatbot = gr.Chatbot(elem_id="chatbot", height=500, show_label=False, render_markdown=True, type="messages")
 
-            # 聊天机器人
-            chatbot = gr.Chatbot(
-                elem_id="chatbot",
-                height=500,
-                show_label=False,
-                render_markdown=True,
-                type="messages",
-                show_copy_button=True  # 添加复制按钮
-            )
-
-            # 输入区域
             with gr.Row():
-                msg = gr.Textbox(
-                    label="Message",
-                    placeholder="Type your message...",
-                    container=False,
-                    scale=4,
-                    max_lines=3
-                )
+                msg = gr.Textbox(label="Message", placeholder="Type your message...", container=False, scale=4)
                 submit_btn = gr.Button("Send", variant='primary', scale=1)
 
-            # 控制按钮
             with gr.Row():
                 clear_btn = gr.Button("Clear", variant='secondary')
                 stop_btn = gr.Button("Stop", variant='stop')
 
-            # 参数面板
             with gr.Accordion("Parameters", open=False):
-                with gr.Row():
-                    temperature = gr.Slider(
-                        minimum=0.1,
-                        maximum=1.5,
-                        value=0.6,
-                        label="Temperature"
-                    )
-                    top_p = gr.Slider(
-                        minimum=0.1,
-                        maximum=1.0,
-                        value=0.95,
-                        label="Top-p"
-                    )
-                with gr.Row():
-                    max_new_tokens = gr.Slider(
-                        minimum=2048,
-                        maximum=32768,
-                        value=4096,
-                        step=64,
-                        label="Max Tokens"
-                    )
-                    repetition_penalty = gr.Slider(
-                        minimum=1,
-                        maximum=1.5,
-                        value=1.2,
-                        step=0.01,
-                        label="Repetition Penalty"
-                    )
+                temperature = gr.Slider(minimum=0.1, maximum=1.5, value=0.6, label="Temperature")
+                top_p = gr.Slider(minimum=0.1, maximum=1.0, value=0.95, label="Top-p")
+                max_new_tokens = gr.Slider(minimum=2048, maximum=32768, value=4096, step=64, label="Max Tokens")
+                repetition_penalty = gr.Slider(minimum=1, maximum=1.5, value=1.2, step=0.01, label="Repetition Penalty")
 
-            # 示例
             gr.Examples(
                 examples=[
-                    ["你是谁呀"],
-                    ["我很难过，爸妈不爱我"],
-                    ["爸妈老是说我笨"]
-                ],
+                    ["我最近总是莫名想哭/发脾气，这是抑郁吗？"],
+                    ["我不知道自己是谁，好像一直在演别人。"],
+                    ["我半夜总是惊醒，脑子里停不下来，这是焦虑吗？"]],
                 inputs=msg,
                 label="咨询例子"
             )
-
-            # 输出区域
-            with gr.Row():
-                output_audio = gr.Audio(
-                    label="Converted Voice",
-                    streaming=True,
-                    autoplay=True
-                )
-                tts_time_display = gr.Textbox(
-                    label="TTS Conversion Time",
-                    value="0s",
-                    interactive=False
-                )
+            output_audio = gr.Audio(label="converted voice", streaming=True, autoplay=True)
+            tts_time_display = gr.Textbox(label="TTS Conversion Time", value="0s", interactive=False)
 
             # 其他代码保持不变...
             text_to_audio_mappings = load_text_audio_mappings(audio_path, slicer_list)
@@ -609,43 +335,22 @@ def build_app():
             default_text_language = "zh"
             default_how_to_cut = "按标点符号切"
 
-            # 事件处理
-            submit_event = submit_btn.click(
-                user, [msg, chatbot], [msg, chatbot], queue=False
-            ).then(
-                lambda: [True], outputs=active_gen
-            ).then(
-                generate_wrapper,
-                [
-                    chatbot,
-                    temperature,
-                    top_p,
-                    max_new_tokens,
-                    repetition_penalty,
-                    active_gen,
-                    gr.State(default_audio_select),
-                    gr.State(default_ref_text),
-                    gr.State(default_prompt_language),
-                    gr.State(default_text_language),
-                    gr.State(default_how_to_cut)
-                ],
-                [chatbot, output_audio, tts_time_display]
-            )
+            submit_event = submit_btn.click(user, [msg, chatbot], [msg, chatbot], queue=False) \
+                .then(lambda: [True], outputs=active_gen) \
+                .then(generate_wrapper, [chatbot, temperature, top_p, max_new_tokens, repetition_penalty,
+                                         active_gen, gr.State(default_audio_select), gr.State(default_ref_text),
+                                         gr.State(default_prompt_language), gr.State(default_text_language),
+                                         gr.State(default_how_to_cut)],
+                      [chatbot, output_audio, tts_time_display])
 
-            stop_btn.click(
-                lambda: [False], None, active_gen, cancels=[submit_event]
-            )
-
-            clear_btn.click(
-                lambda: (None, None, "0s"),
-                None,
-                [chatbot, output_audio, tts_time_display],
-                queue=False
-            ).then(
-                lambda: [False], None, active_gen, cancels=[submit_event]
-            )
+            stop_btn.click(lambda: [False], None, active_gen, cancels=[submit_event])
+            clear_btn.click(lambda: (None, None, "0s"), None, [chatbot, output_audio, tts_time_display], queue=False) \
+                .then(lambda: [False], None, active_gen, cancels=[submit_event])
 
     return demo
+
+
+
 
 
 if __name__ == "__main__":
