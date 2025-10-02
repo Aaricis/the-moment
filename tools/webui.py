@@ -194,7 +194,9 @@ async def generate_wrapper(
             # 音频流
             yield chatbot, audio, tts_time
 
+
 import base64
+
 
 def build_app():
     assets_dir = Path(__file__).parent.parent / "assets"
@@ -314,7 +316,14 @@ def build_app():
                 max_new_tokens = gr.Slider(minimum=2048, maximum=32768, value=4096, step=64, label="Max Tokens")
                 repetition_penalty = gr.Slider(minimum=1, maximum=1.5, value=1.2, step=0.01, label="Repetition Penalty")
 
-            gr.Examples(examples=[["你是谁呀"], ["我很难过，爸妈不爱我"], ["爸妈老是说我笨"]], inputs=msg, label="咨询例子")
+            gr.Examples(
+                examples=[
+                    ["我最近总是莫名想哭/发脾气，这是抑郁吗？"],
+                    ["我不知道自己是谁，好像一直在演别人。"],
+                    ["我半夜总是惊醒，脑子里停不下来，这是焦虑吗？"]],
+                inputs=msg,
+                label="咨询例子"
+            )
             output_audio = gr.Audio(label="converted voice", streaming=True, autoplay=True)
             tts_time_display = gr.Textbox(label="TTS Conversion Time", value="0s", interactive=False)
 
@@ -326,8 +335,8 @@ def build_app():
             default_text_language = "zh"
             default_how_to_cut = "按标点符号切"
 
-            submit_event = submit_btn.click(user, [msg, chatbot], [msg, chatbot], queue=False)\
-                .then(lambda: [True], outputs=active_gen)\
+            submit_event = submit_btn.click(user, [msg, chatbot], [msg, chatbot], queue=False) \
+                .then(lambda: [True], outputs=active_gen) \
                 .then(generate_wrapper, [chatbot, temperature, top_p, max_new_tokens, repetition_penalty,
                                          active_gen, gr.State(default_audio_select), gr.State(default_ref_text),
                                          gr.State(default_prompt_language), gr.State(default_text_language),
@@ -335,13 +344,10 @@ def build_app():
                       [chatbot, output_audio, tts_time_display])
 
             stop_btn.click(lambda: [False], None, active_gen, cancels=[submit_event])
-            clear_btn.click(lambda: (None, None, "0s"), None, [chatbot, output_audio, tts_time_display], queue=False)\
+            clear_btn.click(lambda: (None, None, "0s"), None, [chatbot, output_audio, tts_time_display], queue=False) \
                 .then(lambda: [False], None, active_gen, cancels=[submit_event])
 
     return demo
-
-
-
 
 
 if __name__ == "__main__":
