@@ -19,6 +19,7 @@ from generate import async_chat
 from src.configs.base_config import model_path
 from src.configs.rag_config import prompt_template
 from src.rag.pipeline import EmoLLMRAG
+import base64
 from pathlib import Path
 
 load_dotenv()  # 自动把 .env 读入环境变量
@@ -195,8 +196,6 @@ async def generate_wrapper(
             yield chatbot, audio, tts_time
 
 
-import base64
-
 
 def build_app():
     assets_dir = Path(__file__).parent.parent / "assets"
@@ -207,85 +206,151 @@ def build_app():
         bg_base64 = base64.b64encode(f.read()).decode()
 
     css = f"""
-    /* ===== 全局样式 ===== */
-    :root {{
-        --bg-main: #121212;
-        --bg-glass: rgba(255, 255, 255, 0.08);
-        --bg-glass-hover: rgba(255, 255, 255, 0.12);
-        --accent: #facc15;
-        --user-bubble: #3b82f6;
-        --assistant-bubble: #10b981;
-        --text-primary: #e5e7eb;
-        --border: rgba(255, 255, 255, 0.15);
-        --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }}
-
-    /* ===== 修复背景图片 ===== */
-    .gradio-container {{
-        min-height: 100vh !important;
-        background: linear-gradient(rgba(18, 18, 18, 0.7), rgba(18, 18, 18, 0.7)),
+    /* ===== 背景与全局 ===== */
+    html, body {{
+        height: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: linear-gradient(rgba(18,18,18,0.65), rgba(18,18,18,0.65)),
                     url("data:image/jpg;base64,{bg_base64}") no-repeat center center fixed !important;
         background-size: cover !important;
-        padding: 20px !important;
-        margin: 0 !important;
-        width: 100% !important;
-        max-width: none !important;
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+        color: #e5e7eb;
+        overflow-x: hidden;
+        animation: fadeIn 1s ease-out;
     }}
 
-    /* ===== 主要内容区域 ===== */
+    @keyframes fadeIn {{
+        from {{ opacity: 0; transform: translateY(10px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
+
+    /* ===== 容器玻璃化层 ===== */
     .container {{
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        background: var(--bg-glass) !important;
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        background: rgba(255,255,255,0.08);
         border-radius: 24px;
-        border: 1px solid var(--border);
-        box-shadow: var(--shadow);
-        padding: 24px;
-        margin: 0 auto;
+        border: 1px solid rgba(255,255,255,0.18);
+        box-shadow: 0 8px 40px rgba(0,0,0,0.45);
+        padding: 32px;
+        margin: 50px auto;
         max-width: 900px;
+        transition: transform 0.3s ease;
+    }}
+    .container:hover {{
+        transform: scale(1.01);
     }}
 
-    /* ===== 聊天区域 ===== */
+    /* ===== 标题 ===== */
+    .app-title {{
+        font-size: 2.2rem;
+        font-weight: 700;
+        text-align: center;
+        color: #facc15;
+        text-shadow: 0 0 12px rgba(250,204,21,0.6);
+        margin-bottom: 20px;
+        animation: glow 3s ease-in-out infinite alternate;
+    }}
+    @keyframes glow {{
+        from {{ text-shadow: 0 0 6px rgba(250,204,21,0.4); }}
+        to {{ text-shadow: 0 0 16px rgba(250,204,21,0.9); }}
+    }}
+
+    /* ===== 聊天区 ===== */
     #chatbot {{
-        background: var(--bg-glass);
-        border-radius: 16px;
-        border: 1px solid var(--border);
+        background: rgba(255,255,255,0.05);
+        border-radius: 18px;
+        border: 1px solid rgba(255,255,255,0.18);
         padding: 16px;
         height: 500px !important;
+        overflow-y: auto !important;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+        animation: fadeIn 1s ease-out;
+    }}
+    #chatbot::-webkit-scrollbar {{
+        width: 6px;
+    }}
+    #chatbot::-webkit-scrollbar-thumb {{
+        background: #facc15;
+        border-radius: 3px;
+    }}
+
+    /* ===== 气泡动画 ===== */
+    .user, .assistant {{
+        opacity: 0;
+        animation: bubbleIn 0.4s ease forwards;
+    }}
+    @keyframes bubbleIn {{
+        from {{ opacity: 0; transform: translateY(10px) scale(0.95); }}
+        to {{ opacity: 1; transform: translateY(0) scale(1); }}
     }}
 
     .user {{
-        background: var(--user-bubble) !important;
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
         color: #fff !important;
         border-radius: 18px 18px 4px 18px !important;
-        padding: 10px 14px !important;
-        margin: 8px 0 !important;
+        padding: 12px 16px !important;
+        margin: 8px 0 8px auto !important;
         max-width: 70%;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        box-shadow: 0 4px 12px rgba(59,130,246,0.4);
     }}
 
     .assistant {{
-        background: var(--assistant-bubble) !important;
+        background: linear-gradient(135deg, #10b981, #059669);
         color: #fff !important;
         border-radius: 18px 18px 18px 4px !important;
-        padding: 10px 14px !important;
-        margin: 8px 0 !important;
-        max-width: 70%;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-    }}
-
-    /* ===== 其他组件样式 ===== */
-    input[type="text"], textarea, select {{
-        background: var(--bg-glass) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 12px !important;
-        color: var(--text-primary) !important;
         padding: 12px 16px !important;
+        margin: 8px auto 8px 0 !important;
+        max-width: 70%;
+        box-shadow: 0 4px 12px rgba(16,185,129,0.4);
     }}
 
-    button {{
+    /* ===== 输入框 ===== */
+    .gr-text-input input, .gr-textarea textarea {{
+        background: rgba(255,255,255,0.1) !important;
+        border: 1px solid rgba(255,255,255,0.18) !important;
+        border-radius: 12px !important;
+        color: #e5e7eb !important;
+        padding: 12px 16px !important;
+        transition: all 0.3s ease;
+    }}
+    .gr-text-input input:focus, .gr-textarea textarea:focus {{
+        border-color: #facc15 !important;
+        box-shadow: 0 0 0 2px rgba(250,204,21,0.4) !important;
+    }}
+
+    /* ===== 按钮 ===== */
+    .gr-button {{
         border-radius: 12px !important;
         font-weight: 600 !important;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 0 rgba(250,204,21,0);
+    }}
+    .gr-button.primary {{
+        background: linear-gradient(135deg, #facc15, #eab308) !important;
+        color: #000 !important;
+    }}
+    .gr-button.secondary {{
+        background: rgba(255,255,255,0.1) !important;
+        color: #e5e7eb !important;
+    }}
+    .gr-button:hover {{
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 0 12px rgba(250,204,21,0.5);
+    }}
+
+    /* ===== 折叠面板 ===== */
+    .gr-accordion {{
+        background: rgba(255,255,255,0.06) !important;
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        border-radius: 14px !important;
+        margin-top: 12px !important;
+    }}
+
+    /* ===== 渐显动效 ===== */
+    .fade-in {{
+        animation: fadeIn 1s ease-in-out;
     }}
     """
 
@@ -297,13 +362,26 @@ def build_app():
         return "", history
 
     with gr.Blocks(css=css, title="The Moment") as demo:
-        # 添加一个外层容器
         with gr.Column(elem_classes="container"):
+            gr.HTML("<div class='app-title'>✨ The Moment ✨</div>")
+
             active_gen = gr.State([False])
-            chatbot = gr.Chatbot(elem_id="chatbot", height=500, show_label=False, render_markdown=True, type="messages")
+            chatbot = gr.Chatbot(
+                elem_id="chatbot",
+                height=500,
+                show_label=False,
+                render_markdown=True,
+                type="messages",
+                show_copy_button=True
+            )
 
             with gr.Row():
-                msg = gr.Textbox(label="Message", placeholder="Type your message...", container=False, scale=4)
+                msg = gr.Textbox(
+                    placeholder="Type your message...",
+                    container=False,
+                    scale=4,
+                    max_lines=3
+                )
                 submit_btn = gr.Button("Send", variant='primary', scale=1)
 
             with gr.Row():
@@ -311,23 +389,30 @@ def build_app():
                 stop_btn = gr.Button("Stop", variant='stop')
 
             with gr.Accordion("Parameters", open=False):
-                temperature = gr.Slider(minimum=0.1, maximum=1.5, value=0.6, label="Temperature")
-                top_p = gr.Slider(minimum=0.1, maximum=1.0, value=0.95, label="Top-p")
-                max_new_tokens = gr.Slider(minimum=2048, maximum=32768, value=4096, step=64, label="Max Tokens")
-                repetition_penalty = gr.Slider(minimum=1, maximum=1.5, value=1.2, step=0.01, label="Repetition Penalty")
+                with gr.Row():
+                    temperature = gr.Slider(0.1, 1.5, 0.6, label="Temperature")
+                    top_p = gr.Slider(0.1, 1.0, 0.95, label="Top-p")
+                with gr.Row():
+                    max_new_tokens = gr.Slider(2048, 32768, 4096, step=64, label="Max Tokens")
+                    repetition_penalty = gr.Slider(1, 1.5, 1.2, step=0.01, label="Repetition Penalty")
 
             gr.Examples(
                 examples=[
-                    ["我最近总是莫名想哭/发脾气，这是抑郁吗？"],
-                    ["我不知道自己是谁，好像一直在演别人。"],
-                    ["我半夜总是惊醒，脑子里停不下来，这是焦虑吗？"]],
+                    ["最近压力很大，总是睡不好，该怎么办？"],
+                    ["我和父母总是沟通不顺，他们总觉得我不懂事。"],
+                    ["我害怕失败，总觉得自己不够好。"],
+                    ["我喜欢一个人，但不敢表白。"],
+                    ["怎么才能让自己更有自信？"]
+                ],
                 inputs=msg,
-                label="咨询例子"
+                label="💬 咨询示例（点击可快速开始对话）"
             )
-            output_audio = gr.Audio(label="converted voice", streaming=True, autoplay=True)
-            tts_time_display = gr.Textbox(label="TTS Conversion Time", value="0s", interactive=False)
 
-            # 其他代码保持不变...
+            with gr.Row():
+                output_audio = gr.Audio(label="Converted Voice", streaming=True, autoplay=True)
+                tts_time_display = gr.Textbox(label="TTS Conversion Time", value="0s", interactive=False)
+
+            # --- 示例逻辑（保持你的 generate_wrapper 与事件绑定）
             text_to_audio_mappings = load_text_audio_mappings(audio_path, slicer_list)
             default_audio_select = list(text_to_audio_mappings.keys())[0] if text_to_audio_mappings else ""
             default_ref_text = default_audio_select
@@ -335,22 +420,28 @@ def build_app():
             default_text_language = "zh"
             default_how_to_cut = "按标点符号切"
 
-            submit_event = submit_btn.click(user, [msg, chatbot], [msg, chatbot], queue=False) \
-                .then(lambda: [True], outputs=active_gen) \
-                .then(generate_wrapper, [chatbot, temperature, top_p, max_new_tokens, repetition_penalty,
-                                         active_gen, gr.State(default_audio_select), gr.State(default_ref_text),
-                                         gr.State(default_prompt_language), gr.State(default_text_language),
-                                         gr.State(default_how_to_cut)],
-                      [chatbot, output_audio, tts_time_display])
+            submit_event = submit_btn.click(
+                user, [msg, chatbot], [msg, chatbot], queue=False
+            ).then(
+                lambda: [True], outputs=active_gen
+            ).then(
+                generate_wrapper,
+                [
+                    chatbot, temperature, top_p, max_new_tokens, repetition_penalty, active_gen,
+                    gr.State(default_audio_select), gr.State(default_ref_text),
+                    gr.State(default_prompt_language), gr.State(default_text_language),
+                    gr.State(default_how_to_cut)
+                ],
+                [chatbot, output_audio, tts_time_display]
+            )
 
             stop_btn.click(lambda: [False], None, active_gen, cancels=[submit_event])
-            clear_btn.click(lambda: (None, None, "0s"), None, [chatbot, output_audio, tts_time_display], queue=False) \
-                .then(lambda: [False], None, active_gen, cancels=[submit_event])
+            clear_btn.click(lambda: (None, None, "0s"), None,
+                            [chatbot, output_audio, tts_time_display],
+                            queue=False).then(lambda: [False], None, active_gen,
+                                              cancels=[submit_event])
 
     return demo
-
-
-
 
 
 if __name__ == "__main__":
