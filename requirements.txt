@@ -14,6 +14,7 @@ asgiref==3.8.1
 async-timeout==4.0.3
 attrs==25.3.0
 audioread==3.0.1
+av==11.0.0
 backoff==2.2.1
 bce-python-sdk==0.9.35
 bcrypt==4.3.0
@@ -26,7 +27,7 @@ build==1.2.2.post1
 cachetools==5.5.2
 camel-converter==4.0.1
 cbor==1.0.0
-certifi @ file:///croot/certifi_1754570635119/work/certifi
+certifi @ file:///croot/certifi_1752653701669/work/certifi
 cffi @ file:///croot/cffi_1736182485317/work
 channels==4.0.0
 chardet==5.2.0
@@ -40,6 +41,7 @@ colorlog==6.9.0
 contourpy==1.3.3
 crcmod==1.7
 cryptography==45.0.4
+ctranslate2==4.6.0
 cycler==0.12.1
 dashscope==1.23.6
 dataclasses-json==0.6.7
@@ -58,6 +60,7 @@ erniebot==0.5.9
 et_xmlfile==2.0.0
 faiss==1.9.0
 fastapi==0.115.14
+faster-whisper==0.10.0
 ffmpeg-python==0.2.0
 ffmpy==0.6.1
 filelock==3.18.0
@@ -182,6 +185,7 @@ nvidia-nvtx-cu12==12.8.90
 oauthlib==3.3.1
 onnxruntime==1.22.0
 openai==1.6.0
+openai-whisper==20250625
 openapi-core==0.18.2
 openapi-schema-validator==0.6.3
 openapi-spec-validator==0.7.2
@@ -241,7 +245,7 @@ pyproject_hooks==1.2.0
 PySocks @ file:///work/ci_py311/pysocks_1676822712504/work
 python-dateutil==2.9.0.post0
 python-docx==0.8.11
-python-dotenv==1.0.0
+python-dotenv==1.1.1
 python-multipart==0.0.20
 pytorch-lightning==2.5.2
 pytz==2025.2
@@ -290,7 +294,7 @@ tenacity==8.2.3
 termcolor==3.1.0
 threadpoolctl==3.6.0
 tiktoken==0.5.2
-tokenizers==0.21.4
+tokenizers==0.21.0
 toml==0.10.2
 tomlkit==0.13.3
 toolz==1.0.0
@@ -320,6 +324,7 @@ warc3-wet==0.2.5
 warc3-wet-clueweb09==0.2.5
 watchdog==6.0.0
 watchfiles==1.1.0
+webrtcvad==2.0.10
 websocket-client==1.6.2
 websockets==12.0
 Werkzeug==3.1.3
