@@ -13,9 +13,9 @@ _是抉择未来的那一刻。_
 
 
 
-## 工程架构 | Architecture
+## 技术架构 | Architecture
 
-![工程架构图](/assets/The_Moment_Workflow.png)
+![工程架构图](/assets/the_moment_workflow.png)
 
 The moment as a typical conversational AI application uses three subsystems to do the steps of processing and transcribing the audio, understanding (deriving meaning) of the question asked, generating the response (text) and speaking the response back to the human. These steps are achieved by multiple deep learning solutions working together. First, automatic speech recognition (ASR) is used to process the raw audio signal and transcribing text from it. Second, natural language processing (NLP) is used to derive meaning from the transcribed text (ASR output). Last, speech synthesis or text-to-speech (TTS) is used for the artificial production of human speech from text. Optimizing this multi-step process is complicated, as each of these steps requires building and using one or more deep learning models. When developing a deep learning model to achieve the highest performance and accuracy for each of these areas, a developer will encounter several approaches and experiments that can vary by domain application.
 
