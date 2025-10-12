@@ -5,7 +5,6 @@ import sys
 sys.path.append(os.path.split(sys.path[0])[0])  # 添加包搜索路径
 import textwrap
 
-import gradio as gr
 import requests
 import torch
 from dotenv import load_dotenv
@@ -19,8 +18,11 @@ from generate import async_chat
 from src.configs.base_config import model_path
 from src.configs.rag_config import prompt_template
 from src.rag.pipeline import EmoLLMRAG
+import gradio as gr
 import base64
 from pathlib import Path
+
+from src.asr.asr import whisper_recognize
 
 load_dotenv()  # 自动把 .env 读入环境变量
 
@@ -196,91 +198,65 @@ async def generate_wrapper(
             yield chatbot, audio, tts_time
 
 
-
-import gradio as gr
-import base64
-from pathlib import Path
-import whisper
-import os
-import soundfile as sf
-
-# ========== 加载 Whisper 模型（只加载一次） ==========
-whisper_model = whisper.load_model("small")
-
-
-def whisper_recognize(audio):
-    """将麦克风录音转换为中文文本"""
-    if audio is None:
-        return ""
-    sr, data = audio
-    tmp_path = "temp_record.wav"
-    sf.write(tmp_path, data, sr)
-    result = whisper_model.transcribe(
-        tmp_path,
-        language="zh",
-        initial_prompt="以下为中文语音，请保留标点符号。"
-    )
-    os.remove(tmp_path)
-    return result["text"]
-
-
 def build_app():
     assets_dir = Path(__file__).parent.parent / "assets"
     bg_path = str(assets_dir / "bg.jpg")
 
-    # 转 base64
     with open(bg_path, "rb") as f:
         bg_base64 = base64.b64encode(f.read()).decode()
 
     css = f"""
     html, body {{
         height: 100%;
-        margin: 0 !important;
-        padding: 0 !important;
-        background: linear-gradient(rgba(18,18,18,0.65), rgba(18,18,18,0.65)),
-                    url("data:image/jpg;base64,{bg_base64}") no-repeat center center fixed !important;
-        background-size: cover !important;
-        font-family: 'Inter', 'Segoe UI', sans-serif;
+        margin: 0;
+        background: linear-gradient(rgba(18,18,18,0.6), rgba(18,18,18,0.6)),
+                    url("data:image/jpg;base64,{bg_base64}") no-repeat center center fixed;
+        background-size: cover;
+        font-family: 'Inter', sans-serif;
         color: #e5e7eb;
-        overflow-x: hidden;
-        animation: fadeIn 1s ease-out;
-    }}
-    @keyframes fadeIn {{
-        from {{ opacity: 0; transform: translateY(10px); }}
-        to {{ opacity: 1; transform: translateY(0); }}
     }}
     .container {{
         backdrop-filter: blur(18px);
         -webkit-backdrop-filter: blur(18px);
-        background: rgba(255,255,255,0.08);
-        border-radius: 24px;
-        border: 1px solid rgba(255,255,255,0.18);
-        box-shadow: 0 8px 40px rgba(0,0,0,0.45);
-        padding: 32px;
-        margin: 50px auto;
-        max-width: 900px;
+        background: rgba(255,255,255,0.07);
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.15);
+        box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+        padding: 28px;
+        margin: 40px auto;
+        max-width: 950px;
     }}
     .app-title {{
+        text-align: center;
         font-size: 2.2rem;
         font-weight: 700;
-        text-align: center;
         color: #facc15;
-        text-shadow: 0 0 12px rgba(250,204,21,0.6);
+        margin-bottom: 6px;
+        text-shadow: 0 0 10px rgba(250,204,21,0.6);
+    }}
+    .subtitle {{
+        text-align: center;
+        color: #9ca3af;
+        font-size: 1rem;
         margin-bottom: 20px;
     }}
     #chatbot {{
-        background: rgba(255,255,255,0.05);
-        border-radius: 18px;
-        border: 1px solid rgba(255,255,255,0.18);
-        padding: 16px;
-        height: 500px !important;
-        overflow-y: auto !important;
-        box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+        background: rgba(255,255,255,0.06);
+        border-radius: 16px;
+        padding: 18px;
+        height: 520px !important;
+        overflow-y: auto;
+        border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.25);
+    }}
+    .section {{
+        margin-top: 20px;
+        margin-bottom: 12px;
     }}
     """
 
-    # --- 消息入列逻辑 ---
     def user(message, history):
+        """将用户消息加入聊天历史"""
         if not message:
             return "", history
         history.append({"role": "user", "content": message})
@@ -289,58 +265,43 @@ def build_app():
 
     with gr.Blocks(css=css, title="The Moment") as demo:
         with gr.Column(elem_classes="container"):
+            # ===== 标题 =====
             gr.HTML("<div class='app-title'>✨ The Moment ✨</div>")
+            gr.HTML("<div class='subtitle'>AI 情感陪伴 · 中文语音识别 + 智能对话</div>")
 
-            active_gen = gr.State([False])
+            # ===== 聊天窗口 =====
             chatbot = gr.Chatbot(
                 elem_id="chatbot",
-                height=500,
+                height=520,
                 show_label=False,
                 render_markdown=True,
                 type="messages",
-                show_copy_button=True
+                show_copy_button=True,
             )
 
-            # ===== 输入区（文字 + 语音） =====
-            with gr.Row():
-                msg = gr.Textbox(
-                    placeholder="📝 输入文字或使用麦克风录音...",
-                    container=False,
-                    scale=4,
-                    max_lines=3
-                )
-                submit_btn = gr.Button("Send", variant='primary', scale=1)
+            # ===== 输入区：文字 + 语音 并列 =====
+            gr.HTML("<div class='section'><b>💬 输入文字或语音进行交流</b></div>")
+            with gr.Row(equal_height=True):
+                # 左侧：文字输入框 + 发送按钮
+                with gr.Column(scale=3):
+                    msg = gr.Textbox(
+                        placeholder="📝 输入文字内容...",
+                        lines=2,
+                        scale=3
+                    )
+                    submit_btn = gr.Button("🚀 发送文字", variant='primary')
 
-            # ✅ 新增麦克风语音识别按钮
-            with gr.Row():
-                mic = gr.Audio(
-                    sources=["microphone"],
-                    type="numpy",
-                    label="🎤 语音输入（点击录制中文）",
-                )
-                voice_to_text_btn = gr.Button("🎧 语音转文字", variant='secondary')
+                # 右侧：语音录制 + 识别按钮
+                with gr.Column(scale=2):
+                    mic = gr.Audio(
+                        sources=["microphone"],
+                        type="numpy",
+                        label="🎤 语音录制",
+                    )
+                    voice_to_text_btn = gr.Button("🎧 转文字", variant='secondary')
 
-            # 当点击“语音转文字”时，调用 Whisper 识别
-            voice_to_text_btn.click(
-                fn=whisper_recognize,
-                inputs=mic,
-                outputs=msg,
-                show_progress=True
-            )
-
-            # 继续保持原对话逻辑
-            with gr.Row():
-                clear_btn = gr.Button("Clear", variant='secondary')
-                stop_btn = gr.Button("Stop", variant='stop')
-
-            with gr.Accordion("Parameters", open=False):
-                with gr.Row():
-                    temperature = gr.Slider(0.1, 1.5, 0.6, label="Temperature")
-                    top_p = gr.Slider(0.1, 1.0, 0.95, label="Top-p")
-                with gr.Row():
-                    max_new_tokens = gr.Slider(2048, 32768, 4096, step=64, label="Max Tokens")
-                    repetition_penalty = gr.Slider(1, 1.5, 1.2, step=0.01, label="Repetition Penalty")
-
+            # ===== 示例话题 =====
+            gr.HTML("<div class='section'><b>💡 示例话题</b></div>")
             gr.Examples(
                 examples=[
                     ["最近压力很大，总是睡不好，该怎么办？"],
@@ -350,15 +311,32 @@ def build_app():
                     ["怎么才能让自己更有自信？"]
                 ],
                 inputs=msg,
-                label="💬 咨询示例（点击可快速开始对话）"
             )
 
-            with gr.Row():
-                output_audio = gr.Audio(label="Converted Voice", streaming=True, autoplay=True)
-                tts_time_display = gr.Textbox(label="TTS Conversion Time", value="0s", interactive=False)
+            # ===== 参数设置 =====
+            gr.HTML("<div class='section'><b>⚙️ 模型参数设置</b></div>")
+            with gr.Accordion("生成参数调整", open=False):
+                with gr.Row():
+                    temperature = gr.Slider(0.1, 1.5, 0.6, label="Temperature")
+                    top_p = gr.Slider(0.1, 1.0, 0.95, label="Top-p")
+                with gr.Row():
+                    max_new_tokens = gr.Slider(2048, 32768, 4096, step=64, label="Max Tokens")
+                    repetition_penalty = gr.Slider(1, 1.5, 1.2, step=0.01, label="Repetition Penalty")
 
-            # === 模型推理逻辑（你已有的 generate_wrapper） ===
-            # 这里假设 generate_wrapper 已经定义
+            # ===== 语音输出 =====
+            gr.HTML("<div class='section'><b>🔊 语音输出</b></div>")
+            with gr.Row():
+                output_audio = gr.Audio(label="模型语音回应", streaming=True, autoplay=True)
+                tts_time_display = gr.Textbox(label="TTS 用时", value="0s", interactive=False)
+
+            # ===== 控制按钮 =====
+            with gr.Row():
+                clear_btn = gr.Button("🧹 清空对话", variant='secondary')
+                stop_btn = gr.Button("⏹ 停止生成", variant='stop')
+
+            # ===== 模型逻辑 =====
+            active_gen = gr.State([False])
+
             text_to_audio_mappings = load_text_audio_mappings(audio_path, slicer_list)
             default_audio_select = list(text_to_audio_mappings.keys())[0] if text_to_audio_mappings else ""
             default_ref_text = default_audio_select
@@ -366,6 +344,7 @@ def build_app():
             default_text_language = "zh"
             default_how_to_cut = "按标点符号切"
 
+            # === 文字输入事件 ===
             submit_event = submit_btn.click(
                 user, [msg, chatbot], [msg, chatbot], queue=False
             ).then(
@@ -381,6 +360,15 @@ def build_app():
                 [chatbot, output_audio, tts_time_display]
             )
 
+            # === 语音识别事件 ===
+            voice_to_text_btn.click(
+                fn=whisper_recognize,  # 语音转文字
+                inputs=mic,
+                outputs=msg,
+                show_progress=True
+            )
+
+            # === 控制按钮 ===
             stop_btn.click(lambda: [False], None, active_gen, cancels=[submit_event])
             clear_btn.click(lambda: (None, None, "0s"), None,
                             [chatbot, output_audio, tts_time_display],
@@ -388,7 +376,6 @@ def build_app():
                                               cancels=[submit_event])
 
     return demo
-
 
 
 if __name__ == "__main__":
