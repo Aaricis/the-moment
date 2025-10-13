@@ -10,17 +10,19 @@ _是抉择未来的那一刻。_
 ......
 
 ## 项目预览 | Preview
-### The Moment 文字版
-
+### The Moment 文字版 
 
 https://github.com/user-attachments/assets/a34a5cab-cf9e-47b3-a4e7-3ce1fefdd12a
+
+[![完整演示](/assets/icon.png)](https://www.bilibili.com/video/BV1oY43zCE5x/?share_source=copy_web&vd_source=f27af9aa2b0a1efe2d357b9f461ba958)
+
 
 
 ### The Moment 语音版
 
-
 https://github.com/user-attachments/assets/bee2017b-37a8-45b1-876d-01828e358af6
 
+[![完整演示](/assets/icon.png)](https://www.bilibili.com/video/BV1oY43zCEQK/?share_source=copy_web&vd_source=f27af9aa2b0a1efe2d357b9f461ba958)
 
 ## 技术架构 | Architecture
 
