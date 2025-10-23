@@ -69,6 +69,7 @@ python webui_speech.py
 
 ## 💎项目优化 ｜ TODO
 - [ ] 更新问答模型知识，或使用更加专业的心理学模型；
+- [ ] 模型推理加速优化；
 - [ ] 提高Text to Speech (TTS)语音合成的质量，消除停顿和杂音；
 - [ ] 使用end-to-end Acoustic Model，而不是传统的ASR->LLM->TTS架构，消除不必要的时延；
 
