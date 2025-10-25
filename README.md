@@ -28,8 +28,8 @@ https://github.com/user-attachments/assets/bee2017b-37a8-45b1-876d-01828e358af6
 
 ## ✨功能特性 | Features
 ✅ 提供多轮心理咨询互动聊天服务；   
-✅ 集成Structured Fine-Tuning、Retrieval-augmented generation (RAG)和网络搜索，使Agent给出专业的回答；   
-✅ 集成[Whisper](https://github.com/openai/whisper)和[GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS)，提供语音交互功能；  
+✅ 使用Supervised Fine-Tuning(SFT)、Retrieval-augmented generation(RAG)和网络搜索，使Agent给出专业的回答；   
+✅ 引入[Whisper](https://github.com/openai/whisper)和[GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS)，提供语音交互功能；  
 ✅ 语音输出支持自定义音色；  
 ✅ 以流式方式生成文字和语音，用户体验自然流畅；
 
